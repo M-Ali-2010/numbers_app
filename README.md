@@ -39,7 +39,7 @@
 
 ## 🛠 Как запустить:
 ```bash
-git clone https://github.com/JURAXONMUHAMMADALI/flutter-numbersapp
+git clone https://github.com/M-Ali-2010/numbers_app.git 
 cd flutter-numbersapp
 flutter pub get
 flutter run
@@ -49,5 +49,9 @@ flutter run
 - `http`: для работы с API
 - `provider` или `shared_preferences` — можно подключить для сохранения
 
-## 👤 Автор:
-Жураханов Мухаммад Али
+## 👤 Автор проекта
+
+- 👨‍💻 Имя: Жураханов Мухаммад Али
+- 📧 Email: alimuhammad2010267@gmail.com
+- 💬 Telegram: [@Jrkhnv777](https://t.me/Jrkhnv777)
+- 🐙 GitHub: [github.com/M-Ali-2010](https://github.com/M-Ali-2010)
