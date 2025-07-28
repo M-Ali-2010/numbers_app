@@ -8,8 +8,8 @@ void main() => runApp(NumbersApp());
 class NumbersApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = Color(0xFF6C63FF); // Indigo/Fiolet
-    final Color backgroundColor = Color(0xFFF4F6FC); // Light blueish white
+    final Color primaryColor = Color(0xFF6C63FF); // Indigo/Violet
+    final Color backgroundColor = Color(0xFFF4F6FC); // Light bluish white
     final Color cardColor = Color(0xFFE6E9F0); // Light gray-blue
 
     return MaterialApp(
@@ -116,18 +116,28 @@ class _NumberInfoPageState extends State<NumberInfoPage> {
               label: Text('Сохранить'),
               onPressed: () async {
                 final prefs = await SharedPreferences.getInstance();
-                List<String> saved =
-                    prefs.getStringList('saved_items') ?? [];
-                saved.add(result);
-                await prefs.setStringList('saved_items', saved);
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Сохранено'),
-                    backgroundColor: Colors.green.shade600,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+                List<String> saved = prefs.getStringList('saved_items') ?? [];
+                if (!saved.contains(result)) {
+                  saved.add(result);
+                  await prefs.setStringList('saved_items', saved);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Сохранено'),
+                      backgroundColor: Colors.green.shade600,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                } else {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Уже сохранено'),
+                      backgroundColor: Colors.orange.shade600,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
               },
             )
           ],
@@ -218,28 +228,28 @@ class _NumberInfoPageState extends State<NumberInfoPage> {
                   _isLoading
                       ? CircularProgressIndicator()
                       : Column(
-                          children: [
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                icon: Icon(Icons.search),
-                                label: Text('Найти факт'),
-                                onPressed: () =>
-                                    fetchNumberInfo(isRandom: false),
-                              ),
-                            ),
-                            SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                icon: Icon(Icons.shuffle),
-                                label: Text('Случайный факт'),
-                                onPressed: () =>
-                                    fetchNumberInfo(isRandom: true),
-                              ),
-                            ),
-                          ],
-                        )
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          icon: Icon(Icons.search),
+                          label: Text('Найти факт'),
+                          onPressed: () =>
+                              fetchNumberInfo(isRandom: false),
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          icon: Icon(Icons.shuffle),
+                          label: Text('Случайный факт'),
+                          onPressed: () =>
+                              fetchNumberInfo(isRandom: true),
+                        ),
+                      ),
+                    ],
+                  )
                 ],
               ),
             ),
@@ -284,29 +294,29 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
       body: _savedItems.isEmpty
           ? Center(child: Text('Нет сохранённых данных.'))
           : ListView.separated(
-              padding: EdgeInsets.all(16),
-              itemCount: _savedItems.length,
-              separatorBuilder: (_, __) => SizedBox(height: 10),
-              itemBuilder: (_, index) => Dismissible(
-                key: Key(_savedItems[index]),
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: EdgeInsets.only(right: 20),
-                  child: Icon(Icons.delete, color: Colors.white),
-                ),
-                direction: DismissDirection.endToStart,
-                onDismissed: (_) => removeItem(index),
-                child: Card(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  elevation: 2,
-                  child: ListTile(
-                    title: Text(_savedItems[index]),
-                  ),
-                ),
-              ),
+        padding: EdgeInsets.all(16),
+        itemCount: _savedItems.length,
+        separatorBuilder: (_, __) => SizedBox(height: 10),
+        itemBuilder: (_, index) => Dismissible(
+          key: Key(_savedItems[index]),
+          background: Container(
+            color: Colors.red,
+            alignment: Alignment.centerRight,
+            padding: EdgeInsets.only(right: 20),
+            child: Icon(Icons.delete, color: Colors.white),
+          ),
+          direction: DismissDirection.endToStart,
+          onDismissed: (_) => removeItem(index),
+          child: Card(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14)),
+            elevation: 2,
+            child: ListTile(
+              title: Text(_savedItems[index]),
             ),
+          ),
+        ),
+      ),
     );
   }
 }
