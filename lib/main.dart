@@ -8,14 +8,45 @@ void main() => runApp(NumbersApp());
 class NumbersApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final Color primaryColor = Color(0xFF6C63FF); // Indigo/Fiolet
+    final Color backgroundColor = Color(0xFFF4F6FC); // Light blueish white
+    final Color cardColor = Color(0xFFE6E9F0); // Light gray-blue
+
     return MaterialApp(
       title: 'Numbers Info',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorSchemeSeed: Colors.indigo,
-        brightness: Brightness.light,
-        useMaterial3: true,
+        scaffoldBackgroundColor: backgroundColor,
+        colorScheme: ColorScheme.light(
+          primary: primaryColor,
+          secondary: Colors.deepPurpleAccent,
+          surface: cardColor,
+          background: backgroundColor,
+          onPrimary: Colors.white,
+          onSurface: Colors.black87,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryColor,
+            foregroundColor: Colors.white,
+            textStyle: TextStyle(fontWeight: FontWeight.bold),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: primaryColor,
+            side: BorderSide(color: primaryColor),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            textStyle: TextStyle(fontWeight: FontWeight.w500),
+          ),
+        ),
         textTheme: GoogleFonts.poppinsTextTheme(),
+        useMaterial3: true,
       ),
       home: NumberInfoPage(),
     );
@@ -27,8 +58,7 @@ class NumberInfoPage extends StatefulWidget {
   _NumberInfoPageState createState() => _NumberInfoPageState();
 }
 
-class _NumberInfoPageState extends State<NumberInfoPage>
-    with SingleTickerProviderStateMixin {
+class _NumberInfoPageState extends State<NumberInfoPage> {
   final TextEditingController _controller = TextEditingController();
   String _selectedType = 'trivia';
   bool _isLoading = false;
@@ -84,11 +114,6 @@ class _NumberInfoPageState extends State<NumberInfoPage>
             ElevatedButton.icon(
               icon: Icon(Icons.bookmark_add_outlined),
               label: Text('Сохранить'),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-              ),
               onPressed: () async {
                 final prefs = await SharedPreferences.getInstance();
                 List<String> saved =
@@ -124,14 +149,7 @@ class _NumberInfoPageState extends State<NumberInfoPage>
   void openSavedPage() {
     Navigator.push(
       context,
-      PageRouteBuilder(
-        transitionDuration: Duration(milliseconds: 500),
-        pageBuilder: (_, __, ___) => SavedItemsPage(),
-        transitionsBuilder: (_, a, __, child) => FadeTransition(
-          opacity: a,
-          child: child,
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => SavedItemsPage()),
     );
   }
 
@@ -149,7 +167,7 @@ class _NumberInfoPageState extends State<NumberInfoPage>
           IconButton(
             icon: Icon(Icons.bookmarks_outlined),
             onPressed: openSavedPage,
-            tooltip: 'Сохраненные',
+            tooltip: 'Сохранённые',
           )
         ],
       ),
@@ -157,81 +175,72 @@ class _NumberInfoPageState extends State<NumberInfoPage>
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              elevation: 3,
-              color: Colors.grey.shade50,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    DropdownButtonFormField<String>(
-                      value: _selectedType,
-                      decoration: InputDecoration(
-                        labelText: 'Тип информации',
-                        border: border,
-                      ),
-                      items: ['trivia', 'math', 'date'].map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: Text(type.toUpperCase()),
-                        );
-                      }).toList(),
-                      onChanged: (val) => setState(() => _selectedType = val!),
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  )
+                ],
+              ),
+              padding: EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  DropdownButtonFormField<String>(
+                    value: _selectedType,
+                    decoration: InputDecoration(
+                      labelText: 'Тип информации',
+                      border: border,
                     ),
-                    SizedBox(height: 20),
-                    TextField(
-                      controller: _controller,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Введите число',
-                        border: border,
-                        prefixIcon: Icon(Icons.numbers),
-                      ),
+                    items: ['trivia', 'math', 'date'].map((type) {
+                      return DropdownMenuItem(
+                        value: type,
+                        child: Text(type.toUpperCase()),
+                      );
+                    }).toList(),
+                    onChanged: (val) => setState(() => _selectedType = val!),
+                  ),
+                  SizedBox(height: 20),
+                  TextField(
+                    controller: _controller,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Введите число',
+                      border: border,
+                      prefixIcon: Icon(Icons.numbers),
                     ),
-                    SizedBox(height: 24),
-                    _isLoading
-                        ? CircularProgressIndicator()
-                        : Column(
-                            children: [
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  icon: Icon(Icons.search),
-                                  label: Text('Найти факт'),
-                                  onPressed: () =>
-                                      fetchNumberInfo(isRandom: false),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: 14, horizontal: 20),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(14)),
-                                  ),
-                                ),
+                  ),
+                  SizedBox(height: 24),
+                  _isLoading
+                      ? CircularProgressIndicator()
+                      : Column(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                icon: Icon(Icons.search),
+                                label: Text('Найти факт'),
+                                onPressed: () =>
+                                    fetchNumberInfo(isRandom: false),
                               ),
-                              SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  icon: Icon(Icons.shuffle),
-                                  label: Text('Случайный факт'),
-                                  onPressed: () =>
-                                      fetchNumberInfo(isRandom: true),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: 14, horizontal: 20),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(14)),
-                                  ),
-                                ),
+                            ),
+                            SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                icon: Icon(Icons.shuffle),
+                                label: Text('Случайный факт'),
+                                onPressed: () =>
+                                    fetchNumberInfo(isRandom: true),
                               ),
-                            ],
-                          )
-                  ],
-                ),
+                            ),
+                          ],
+                        )
+                ],
               ),
             ),
           ],
@@ -271,16 +280,9 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Сохраненные факты'),
-      ),
+      appBar: AppBar(title: Text('⭐ Сохранённые')),
       body: _savedItems.isEmpty
-          ? Center(
-              child: Text(
-                'Нет сохранённых данных.',
-                style: TextStyle(fontSize: 16),
-              ),
-            )
+          ? Center(child: Text('Нет сохранённых данных.'))
           : ListView.separated(
               padding: EdgeInsets.all(16),
               itemCount: _savedItems.length,
