@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() => runApp(NumbersApp());
 
@@ -11,11 +12,10 @@ class NumbersApp extends StatelessWidget {
       title: 'Numbers Info',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        colorSchemeSeed: Colors.indigo,
+        brightness: Brightness.light,
         useMaterial3: true,
-        textTheme: TextTheme(
-          bodyLarge: TextStyle(fontSize: 16),
-        ),
+        textTheme: GoogleFonts.poppinsTextTheme(),
       ),
       home: NumberInfoPage(),
     );
@@ -27,7 +27,8 @@ class NumberInfoPage extends StatefulWidget {
   _NumberInfoPageState createState() => _NumberInfoPageState();
 }
 
-class _NumberInfoPageState extends State<NumberInfoPage> {
+class _NumberInfoPageState extends State<NumberInfoPage>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   String _selectedType = 'trivia';
   bool _isLoading = false;
@@ -38,7 +39,7 @@ class _NumberInfoPageState extends State<NumberInfoPage> {
     final isInputValid = int.tryParse(input) != null;
 
     if (!isRandom && (input.isEmpty || !isInputValid)) {
-      showError('Число должно быть в виде цифры.');
+      showError('Введите корректное число');
       setState(() => _isLoading = false);
       return;
     }
@@ -51,64 +52,71 @@ class _NumberInfoPageState extends State<NumberInfoPage> {
       if (response.statusCode == 200) {
         showResultDialog(response.body);
       } else {
-        showError('Ошибка при получении данных.');
+        showError('Ошибка при получении данных');
       }
     } catch (e) {
-      showError('Ошибка подключения к интернету.');
+      showError('Нет подключения к интернету');
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
   void showResultDialog(String result) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('✨ Результат'),
-        content: Text(result),
-        actions: [
-          TextButton.icon(
-            onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              List<String> saved =
-                  prefs.getStringList('saved_items') ?? [];
-              saved.add(result);
-              await prefs.setStringList('saved_items', saved);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Сохранено'),
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: Colors.green.shade600,
-                ),
-              );
-            },
-            icon: Icon(Icons.save_alt_outlined),
-            label: Text('Сохранить'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Закрыть'),
-          ),
-        ],
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.stars, color: Colors.amber, size: 40),
+            SizedBox(height: 16),
+            Text(
+              result,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 24),
+            ElevatedButton.icon(
+              icon: Icon(Icons.bookmark_add_outlined),
+              label: Text('Сохранить'),
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                List<String> saved =
+                    prefs.getStringList('saved_items') ?? [];
+                saved.add(result);
+                await prefs.setStringList('saved_items', saved);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Сохранено'),
+                    backgroundColor: Colors.green.shade600,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+            )
+          ],
+        ),
       ),
     );
   }
 
   void showError(String message) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('⚠️ Ошибка'),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
         content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Ок'),
-          )
-        ],
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -116,24 +124,32 @@ class _NumberInfoPageState extends State<NumberInfoPage> {
   void openSavedPage() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => SavedItemsPage()),
+      PageRouteBuilder(
+        transitionDuration: Duration(milliseconds: 500),
+        pageBuilder: (_, __, ___) => SavedItemsPage(),
+        transitionsBuilder: (_, a, __, child) => FadeTransition(
+          opacity: a,
+          child: child,
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
     );
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('📊 Информация о числе'),
+        title: Text('Числовые Факты'),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: Icon(Icons.bookmarks_outlined),
-            tooltip: 'Сохраненные',
             onPressed: openSavedPage,
+            tooltip: 'Сохраненные',
           )
         ],
       ),
@@ -142,11 +158,12 @@ class _NumberInfoPageState extends State<NumberInfoPage> {
         child: Column(
           children: [
             Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
               elevation: 3,
-              margin: EdgeInsets.only(bottom: 20),
+              color: Colors.grey.shade50,
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
                     DropdownButtonFormField<String>(
@@ -163,52 +180,56 @@ class _NumberInfoPageState extends State<NumberInfoPage> {
                       }).toList(),
                       onChanged: (val) => setState(() => _selectedType = val!),
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 20),
                     TextField(
                       controller: _controller,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         labelText: 'Введите число',
                         border: border,
-                        prefixIcon: Icon(Icons.numbers_outlined),
+                        prefixIcon: Icon(Icons.numbers),
                       ),
                     ),
                     SizedBox(height: 24),
-                    if (_isLoading) CircularProgressIndicator(),
-                    if (!_isLoading)
-                      Column(
-                        children: [
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              icon: Icon(Icons.search),
-                              label: Text('Получить информацию'),
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
+                    _isLoading
+                        ? CircularProgressIndicator()
+                        : Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  icon: Icon(Icons.search),
+                                  label: Text('Найти факт'),
+                                  onPressed: () =>
+                                      fetchNumberInfo(isRandom: false),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: 14, horizontal: 20),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(14)),
+                                  ),
                                 ),
-                                padding: EdgeInsets.symmetric(vertical: 16),
                               ),
-                              onPressed: () => fetchNumberInfo(isRandom: false),
-                            ),
-                          ),
-                          SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              icon: Icon(Icons.shuffle),
-                              label: Text('Случайное число'),
-                              style: OutlinedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
+                              SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  icon: Icon(Icons.shuffle),
+                                  label: Text('Случайный факт'),
+                                  onPressed: () =>
+                                      fetchNumberInfo(isRandom: true),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: 14, horizontal: 20),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(14)),
+                                  ),
                                 ),
-                                padding: EdgeInsets.symmetric(vertical: 16),
                               ),
-                              onPressed: () => fetchNumberInfo(isRandom: true),
-                            ),
-                          ),
-                        ],
-                      ),
+                            ],
+                          )
                   ],
                 ),
               ),
@@ -250,21 +271,36 @@ class _SavedItemsPageState extends State<SavedItemsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('⭐ Сохранённые данные')),
+      appBar: AppBar(
+        title: Text('Сохраненные факты'),
+      ),
       body: _savedItems.isEmpty
-          ? Center(child: Text('Нет сохранённых данных.', style: TextStyle(fontSize: 16)))
+          ? Center(
+              child: Text(
+                'Нет сохранённых данных.',
+                style: TextStyle(fontSize: 16),
+              ),
+            )
           : ListView.separated(
               padding: EdgeInsets.all(16),
               itemCount: _savedItems.length,
               separatorBuilder: (_, __) => SizedBox(height: 10),
-              itemBuilder: (_, index) => Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                elevation: 2,
-                child: ListTile(
-                  title: Text(_savedItems[index]),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete_outline, color: Colors.red),
-                    onPressed: () => removeItem(index),
+              itemBuilder: (_, index) => Dismissible(
+                key: Key(_savedItems[index]),
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  padding: EdgeInsets.only(right: 20),
+                  child: Icon(Icons.delete, color: Colors.white),
+                ),
+                direction: DismissDirection.endToStart,
+                onDismissed: (_) => removeItem(index),
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                  elevation: 2,
+                  child: ListTile(
+                    title: Text(_savedItems[index]),
                   ),
                 ),
               ),
